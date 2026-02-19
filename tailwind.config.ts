@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+        display: ['Fraunces', 'serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -46,6 +50,14 @@ export default {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        status: {
+          confirmed: "hsl(var(--status-confirmed))",
+          "confirmed-bg": "hsl(var(--status-confirmed-bg))",
+          pending: "hsl(var(--status-pending))",
+          "pending-bg": "hsl(var(--status-pending-bg))",
+          cancelled: "hsl(var(--status-cancelled))",
+          "cancelled-bg": "hsl(var(--status-cancelled-bg))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
