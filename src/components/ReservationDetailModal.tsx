@@ -5,11 +5,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Reservation } from '@/types/reservation';
+import { Reservation, PROPERTIES } from '@/types/reservation';
 import { StatusBadge } from './StatusBadge';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { CalendarDays, Phone, FileText, Pencil, Trash2 } from 'lucide-react';
+import { CalendarDays, Phone, FileText, Pencil, Trash2, Home } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ReservationDetailModalProps {
@@ -50,6 +50,11 @@ export function ReservationDetailModal({
           </DialogHeader>
 
           <div className="mt-5 space-y-4">
+            <div className="flex items-center gap-3">
+              <Home className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">{PROPERTIES[reservation.property]}</span>
+            </div>
+
             <div className="flex items-start gap-3">
               <CalendarDays className="h-4 w-4 mt-0.5 text-muted-foreground" />
               <div className="text-sm">

@@ -25,56 +25,40 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Reservation, ReservationFormData, PROPERTIES, PropertyId } from '@/types/reservation';
+import { BlockedDateFormData, PROPERTIES, PropertyId } from '@/types/reservation';
 import { motion } from 'framer-motion';
 
 const formSchema = z
   .object({
-    guestName: z.string().trim().min(1, 'El nombre es obligatorio').max(100),
-    checkIn: z.string().min(1, 'La fecha de ingreso es obligatoria'),
-    checkOut: z.string().min(1, 'La fecha de egreso es obligatoria'),
-    phone: z.string().trim().min(1, 'El teléfono es obligatorio').max(30),
-    notes: z.string().max(500).default(''),
-    status: z.enum(['confirmed', 'pending', 'cancelled']),
     property: z.enum(['onoke', 'asike'] as const),
+    startDate: z.string().min(1, 'La fecha de inicio es obligatoria'),
+    endDate: z.string().min(1, 'La fecha de fin es obligatoria'),
+    reason: z.string().max(200).default(''),
   })
-  .refine((data) => data.checkOut > data.checkIn, {
-    message: 'La fecha de egreso debe ser posterior al ingreso',
-    path: ['checkOut'],
+  .refine((data) => data.endDate > data.startDate, {
+    message: 'La fecha de fin debe ser posterior al inicio',
+    path: ['endDate'],
   });
 
-interface ReservationFormModalProps {
+interface BlockDateModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: ReservationFormData, id?: string) => boolean;
-  reservation?: Reservation | null;
-  defaultDate?: string;
+  onSubmit: (data: BlockedDateFormData) => boolean;
 }
 
-export function ReservationFormModal({
-  open,
-  onClose,
-  onSubmit,
-  reservation,
-  defaultDate,
-}: ReservationFormModalProps) {
-  const isEditing = !!reservation;
-
+export function BlockDateModal({ open, onClose, onSubmit }: BlockDateModalProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      guestName: reservation?.guestName ?? '',
-      checkIn: reservation?.checkIn ?? defaultDate ?? '',
-      checkOut: reservation?.checkOut ?? '',
-      phone: reservation?.phone ?? '',
-      notes: reservation?.notes ?? '',
-      status: reservation?.status ?? 'pending',
-      property: reservation?.property ?? 'onoke',
+      property: 'onoke',
+      startDate: '',
+      endDate: '',
+      reason: '',
     },
   });
 
   const handleSubmit = (values: z.infer<typeof formSchema>) => {
-    const success = onSubmit(values as ReservationFormData, reservation?.id);
+    const success = onSubmit(values as BlockedDateFormData);
     if (success) {
       form.reset();
       onClose();
@@ -83,7 +67,7 @@ export function ReservationFormModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden border-border/50">
+      <DialogContent className="sm:max-w-[420px] p-0 overflow-hidden border-border/50">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -91,9 +75,7 @@ export function ReservationFormModal({
           className="p-6"
         >
           <DialogHeader>
-            <DialogTitle className="font-display text-xl">
-              {isEditing ? 'Editar reserva' : 'Nueva reserva'}
-            </DialogTitle>
+            <DialogTitle className="font-display text-xl">Bloquear Fechas</DialogTitle>
           </DialogHeader>
 
           <Form {...form}>
@@ -121,27 +103,13 @@ export function ReservationFormModal({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="guestName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre del huésped</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: Juan Pérez" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <div className="grid grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
-                  name="checkIn"
+                  name="startDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Ingreso</FormLabel>
+                      <FormLabel>Desde</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>
@@ -151,10 +119,10 @@ export function ReservationFormModal({
                 />
                 <FormField
                   control={form.control}
-                  name="checkOut"
+                  name="endDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Egreso</FormLabel>
+                      <FormLabel>Hasta</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>
@@ -166,52 +134,15 @@ export function ReservationFormModal({
 
               <FormField
                 control={form.control}
-                name="phone"
+                name="reason"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Teléfono</FormLabel>
-                    <FormControl>
-                      <Input placeholder="+54 291 ..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estado</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="pending">Pendiente</SelectItem>
-                        <SelectItem value="confirmed">Confirmada</SelectItem>
-                        <SelectItem value="cancelled">Cancelada</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Observaciones</FormLabel>
+                    <FormLabel>Motivo (opcional)</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Notas adicionales..."
+                        placeholder="Ej: Mantenimiento, uso personal..."
                         className="resize-none"
-                        rows={3}
+                        rows={2}
                         {...field}
                       />
                     </FormControl>
@@ -224,8 +155,8 @@ export function ReservationFormModal({
                 <Button type="button" variant="outline" onClick={onClose}>
                   Cancelar
                 </Button>
-                <Button type="submit">
-                  {isEditing ? 'Guardar cambios' : 'Crear reserva'}
+                <Button type="submit" className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Bloquear
                 </Button>
               </div>
             </form>

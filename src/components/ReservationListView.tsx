@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -17,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Reservation, ReservationStatus } from '@/types/reservation';
+import { Reservation, ReservationStatus, PROPERTIES } from '@/types/reservation';
 import { StatusBadge } from './StatusBadge';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -28,7 +27,7 @@ interface ReservationListViewProps {
   onReservationClick: (reservation: Reservation) => void;
 }
 
-type SortKey = 'guestName' | 'checkIn' | 'status';
+type SortKey = 'guestName' | 'checkIn' | 'status' | 'property';
 
 export function ReservationListView({ reservations, onReservationClick }: ReservationListViewProps) {
   const [search, setSearch] = useState('');
@@ -52,6 +51,7 @@ export function ReservationListView({ reservations, onReservationClick }: Reserv
       let cmp = 0;
       if (sortKey === 'guestName') cmp = a.guestName.localeCompare(b.guestName);
       else if (sortKey === 'checkIn') cmp = a.checkIn.localeCompare(b.checkIn);
+      else if (sortKey === 'property') cmp = a.property.localeCompare(b.property);
       else cmp = a.status.localeCompare(b.status);
       return sortAsc ? cmp : -cmp;
     });
@@ -69,7 +69,6 @@ export function ReservationListView({ reservations, onReservationClick }: Reserv
 
   return (
     <Card className="shadow-card border-border/50 overflow-hidden">
-      {/* Filters */}
       <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -93,7 +92,6 @@ export function ReservationListView({ reservations, onReservationClick }: Reserv
         </Select>
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -101,6 +99,11 @@ export function ReservationListView({ reservations, onReservationClick }: Reserv
               <TableHead>
                 <button className="flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort('guestName')}>
                   Huésped <ArrowUpDown className="h-3 w-3" />
+                </button>
+              </TableHead>
+              <TableHead>
+                <button className="flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort('property')}>
+                  Propiedad <ArrowUpDown className="h-3 w-3" />
                 </button>
               </TableHead>
               <TableHead>
@@ -119,7 +122,7 @@ export function ReservationListView({ reservations, onReservationClick }: Reserv
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   No se encontraron reservas
                 </TableCell>
               </TableRow>
@@ -131,6 +134,9 @@ export function ReservationListView({ reservations, onReservationClick }: Reserv
                   onClick={() => onReservationClick(r)}
                 >
                   <TableCell className="font-medium">{r.guestName}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {PROPERTIES[r.property]}
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {format(parseISO(r.checkIn), 'dd/MM', { locale: es })} –{' '}
                     {format(parseISO(r.checkOut), 'dd/MM', { locale: es })}
