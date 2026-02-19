@@ -1,31 +1,37 @@
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarView } from '@/components/CalendarView';
+import { WeeklyTimeline } from '@/components/WeeklyTimeline';
 import { StatsCards } from '@/components/StatsCards';
 import { ReservationListView } from '@/components/ReservationListView';
 import { ReservationFormModal } from '@/components/ReservationFormModal';
 import { ReservationDetailModal } from '@/components/ReservationDetailModal';
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
+import { BlockDateModal } from '@/components/BlockDateModal';
 import { useReservations } from '@/hooks/useReservations';
-import { Reservation, ReservationFormData } from '@/types/reservation';
-import { Plus, Mountain } from 'lucide-react';
-import { format } from 'date-fns';
+import { Reservation, ReservationFormData, BlockedDateFormData, BlockedDate, PropertyId } from '@/types/reservation';
+import { Plus, Mountain, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
+import { startOfWeek, addWeeks, subWeeks, format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const Index = () => {
   const {
     reservations,
+    blockedDates,
     createReservation,
     updateReservation,
     deleteReservation,
+    createBlockedDate,
+    deleteBlockedDate,
   } = useReservations();
 
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentWeek, setCurrentWeek] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
 
   // Modal states
   const [formOpen, setFormOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [blockOpen, setBlockOpen] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [defaultDate, setDefaultDate] = useState<string>('');
 
@@ -35,16 +41,16 @@ const Index = () => {
     setFormOpen(true);
   }, []);
 
-  const handleDayClick = useCallback((date: Date) => {
-    setSelectedReservation(null);
-    setDefaultDate(format(date, 'yyyy-MM-dd'));
-    setFormOpen(true);
-  }, []);
-
   const handleReservationClick = useCallback((reservation: Reservation) => {
     setSelectedReservation(reservation);
     setDetailOpen(true);
   }, []);
+
+  const handleBlockClick = useCallback((block: BlockedDate) => {
+    if (confirm(`¿Eliminar el bloqueo "${block.reason || 'Sin motivo'}"?`)) {
+      deleteBlockedDate(block.id);
+    }
+  }, [deleteBlockedDate]);
 
   const handleEdit = useCallback((reservation: Reservation) => {
     setDetailOpen(false);
@@ -77,6 +83,17 @@ const Index = () => {
     [createReservation, updateReservation]
   );
 
+  const handleBlockSubmit = useCallback(
+    (data: BlockedDateFormData): boolean => {
+      return createBlockedDate(data);
+    },
+    [createBlockedDate]
+  );
+
+  const goToToday = useCallback(() => {
+    setCurrentWeek(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -93,31 +110,67 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">Gestión de reservas</p>
             </div>
           </div>
-          <Button onClick={handleNewReservation} size="sm">
-            <Plus className="h-4 w-4 mr-1.5" />
-            Nueva reserva
-          </Button>
         </div>
       </header>
 
       {/* Main content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        <StatsCards reservations={reservations} currentMonth={currentMonth} />
+        <StatsCards reservations={reservations} currentMonth={currentWeek} />
 
-        <Tabs defaultValue="calendar" className="space-y-4">
+        <Tabs defaultValue="timeline" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="calendar">Calendario</TabsTrigger>
+            <TabsTrigger value="timeline">Timeline</TabsTrigger>
             <TabsTrigger value="list">Lista</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="calendar">
-            <CalendarView
+          <TabsContent value="timeline" className="space-y-6">
+            {/* Week navigation */}
+            <div className="flex items-center justify-center gap-2">
+              <Button variant="outline" size="icon" onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="icon" onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={goToToday}>
+                Hoy
+              </Button>
+            </div>
+
+            {/* Timelines per property */}
+            <WeeklyTimeline
+              property="onoke"
+              weekStart={currentWeek}
               reservations={reservations}
-              currentMonth={currentMonth}
-              onMonthChange={setCurrentMonth}
-              onDayClick={handleDayClick}
+              blockedDates={blockedDates}
               onReservationClick={handleReservationClick}
+              onBlockClick={handleBlockClick}
             />
+
+            <WeeklyTimeline
+              property="asike"
+              weekStart={currentWeek}
+              reservations={reservations}
+              blockedDates={blockedDates}
+              onReservationClick={handleReservationClick}
+              onBlockClick={handleBlockClick}
+            />
+
+            {/* Action buttons */}
+            <div className="flex justify-center gap-3">
+              <Button onClick={handleNewReservation} size="sm">
+                <Plus className="h-4 w-4 mr-1.5" />
+                Nueva Reserva
+              </Button>
+              <Button
+                onClick={() => setBlockOpen(true)}
+                size="sm"
+                variant="destructive"
+              >
+                <Lock className="h-4 w-4 mr-1.5" />
+                Bloquear Fechas
+              </Button>
+            </div>
           </TabsContent>
 
           <TabsContent value="list">
@@ -152,6 +205,12 @@ const Index = () => {
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDeleteConfirm}
         guestName={selectedReservation?.guestName}
+      />
+
+      <BlockDateModal
+        open={blockOpen}
+        onClose={() => setBlockOpen(false)}
+        onSubmit={handleBlockSubmit}
       />
     </div>
   );
