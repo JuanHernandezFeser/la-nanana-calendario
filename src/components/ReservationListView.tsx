@@ -79,7 +79,7 @@ export function ReservationListView({ reservations, onReservationClick }: Reserv
             className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        {/* <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
@@ -89,7 +89,7 @@ export function ReservationListView({ reservations, onReservationClick }: Reserv
             <SelectItem value="pending">Pendientes</SelectItem>
             <SelectItem value="cancelled">Canceladas</SelectItem>
           </SelectContent>
-        </Select>
+        </Select> */}
       </div>
 
       <div className="overflow-x-auto">
@@ -112,11 +112,11 @@ export function ReservationListView({ reservations, onReservationClick }: Reserv
                 </button>
               </TableHead>
               <TableHead className="hidden sm:table-cell">Teléfono</TableHead>
-              <TableHead>
+              {/* <TableHead>
                 <button className="flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort('status')}>
                   Estado <ArrowUpDown className="h-3 w-3" />
                 </button>
-              </TableHead>
+              </TableHead> */}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -143,9 +143,6 @@ export function ReservationListView({ reservations, onReservationClick }: Reserv
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
                     {r.phone}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={r.status} />
                   </TableCell>
                 </TableRow>
               ))

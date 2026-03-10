@@ -16,6 +16,10 @@ export interface Reservation {
   notes: string;
   status: ReservationStatus;
   property: PropertyId;
+  guests: number;
+  total: number;
+  deposit: number;
+  color?: string;
   createdAt: string;
 }
 
@@ -27,6 +31,10 @@ export interface ReservationFormData {
   notes: string;
   status: ReservationStatus;
   property: PropertyId;
+  guests: number;
+  total: number;
+  deposit: number;
+  color?: string;
 }
 
 export interface BlockedDate {

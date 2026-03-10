@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/form';
 import { Reservation, ReservationFormData, PROPERTIES, PropertyId } from '@/types/reservation';
 import { motion } from 'framer-motion';
+import { useEffect } from 'react';
 
 const formSchema = z
   .object({
@@ -37,6 +38,10 @@ const formSchema = z
     notes: z.string().max(500).default(''),
     status: z.enum(['confirmed', 'pending', 'cancelled']),
     property: z.enum(['onoke', 'asike'] as const),
+    guests: z.preprocess((v) => Number(v), z.number().min(1, 'Debe indicar al menos 1 persona')),
+    total: z.preprocess((v) => Number(v), z.number().min(0, 'El valor total debe ser >= 0')),
+    deposit: z.preprocess((v) => Number(v), z.number().min(0, 'La seña debe ser >= 0')),
+    color: z.string().min(1, 'Seleccione un color'),
   })
   .refine((data) => data.checkOut > data.checkIn, {
     message: 'La fecha de egreso debe ser posterior al ingreso',
@@ -60,6 +65,16 @@ export function ReservationFormModal({
 }: ReservationFormModalProps) {
   const isEditing = !!reservation;
 
+  const GREEN = '#10B981';
+  const ONOKE_COLORS = [
+    { label: 'Rosa', value: '#F472B6' },
+    { label: 'Verde', value: GREEN },
+  ];
+  const ASIKE_COLORS = [
+    { label: 'Celeste', value: '#60A5FA' },
+    { label: 'Verde', value: GREEN },
+  ];
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -70,8 +85,21 @@ export function ReservationFormModal({
       notes: reservation?.notes ?? '',
       status: reservation?.status ?? 'pending',
       property: reservation?.property ?? 'onoke',
+      guests: reservation?.guests ?? 1,
+      total: reservation?.total ?? 0,
+      deposit: reservation?.deposit ?? 0,
+      color: reservation?.color ?? (reservation?.property === 'asike' ? ASIKE_COLORS[0].value : ONOKE_COLORS[0].value),
     },
   });
+
+  const watchedProperty = form.watch('property');
+
+  useEffect(() => {
+    if (!isEditing) {
+      const opts = watchedProperty === 'asike' ? ASIKE_COLORS : ONOKE_COLORS;
+      form.setValue('color', opts[0].value);
+    }
+  }, [watchedProperty, isEditing]);
 
   const handleSubmit = (values: z.infer<typeof formSchema>) => {
     const success = onSubmit(values as ReservationFormData, reservation?.id);
@@ -83,21 +111,21 @@ export function ReservationFormModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden border-border/50">
+      <DialogContent className="w-full max-h-screen overflow-y-auto sm:max-w-[480px] sm:max-h-auto sm:overflow-visible p-0 border-border/50">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="p-6"
+          className="p-4 sm:p-6"
         >
-          <DialogHeader>
+          <DialogHeader className="hidden sm:block">
             <DialogTitle className="font-display text-xl">
               {isEditing ? 'Editar reserva' : 'Nueva reserva'}
             </DialogTitle>
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 mt-4">
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3 sm:space-y-4 mt-0 sm:mt-4">
               <FormField
                 control={form.control}
                 name="property"
@@ -119,6 +147,41 @@ export function ReservationFormModal({
                     <FormMessage />
                   </FormItem>
                 )}
+              />
+
+              {/* Color selection dependent on property */}
+              <FormField
+                control={form.control}
+                name="color"
+                render={({ field }) => {
+                  const opts = form.getValues('property') === 'asike' ? ASIKE_COLORS : ONOKE_COLORS;
+                  return (
+                    <FormItem>
+                      <FormLabel>Color de la reserva</FormLabel>
+                      <FormControl>
+                        <div className="flex items-center gap-3">
+                          {opts.map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => field.onChange(opt.value)}
+                              aria-pressed={field.value === opt.value}
+                              title={opt.label}
+                              className={`flex items-center gap-2 p-1 rounded-md border ${field.value === opt.value ? 'ring-2 ring-offset-1 ring-primary' : 'border-transparent'}`}
+                            >
+                              <span
+                                className="w-6 h-6 rounded-md"
+                                style={{ backgroundColor: opt.value }}
+                              />
+                              <span className="text-sm">{opt.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
@@ -178,28 +241,55 @@ export function ReservationFormModal({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estado</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <div className="grid grid-cols-3 gap-3 items-end">
+                <FormField
+                  control={form.control}
+                  name="guests"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cantidad de personas</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
+                        <Input type="number" min={1} {...field} className="h-10 w-full" />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="pending">Pendiente</SelectItem>
-                        <SelectItem value="confirmed">Confirmada</SelectItem>
-                        <SelectItem value="cancelled">Cancelada</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="total"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valor total</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                          <Input type="number" min={0} step="0.01" {...field} className="pl-7 h-10 w-full" inputMode="decimal" />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="deposit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Seña recibida</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                          <Input type="number" min={0} step="0.01" {...field} className="pl-7 h-10 w-full" inputMode="decimal" />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={form.control}
@@ -220,7 +310,7 @@ export function ReservationFormModal({
                 )}
               />
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-1 sm:gap-2 pt-1 sm:pt-2">
                 <Button type="button" variant="outline" onClick={onClose}>
                   Cancelar
                 </Button>

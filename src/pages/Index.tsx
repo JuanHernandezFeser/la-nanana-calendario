@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { WeeklyTimeline } from '@/components/WeeklyTimeline';
 import { StatsCards } from '@/components/StatsCards';
 import { ReservationListView } from '@/components/ReservationListView';
@@ -8,11 +9,14 @@ import { ReservationFormModal } from '@/components/ReservationFormModal';
 import { ReservationDetailModal } from '@/components/ReservationDetailModal';
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
 import { BlockDateModal } from '@/components/BlockDateModal';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import { useReservations } from '@/hooks/useReservations';
 import { Reservation, ReservationFormData, BlockedDateFormData, BlockedDate, PropertyId } from '@/types/reservation';
-import { Plus, Mountain, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Lock, AlertCircle } from 'lucide-react';
 import { startOfWeek, addWeeks, subWeeks, format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/hooks/useTheme';
 
 const Index = () => {
   const {
@@ -23,9 +27,13 @@ const Index = () => {
     deleteReservation,
     createBlockedDate,
     deleteBlockedDate,
+    isLoading,
+    error,
   } = useReservations();
 
   const [currentWeek, setCurrentWeek] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
+
+  const { theme, toggle } = useTheme();
 
   // Modal states
   const [formOpen, setFormOpen] = useState(false);
@@ -47,6 +55,7 @@ const Index = () => {
   }, []);
 
   const handleBlockClick = useCallback((block: BlockedDate) => {
+    console.log(block);
     if (confirm(`¿Eliminar el bloqueo "${block.reason || 'Sin motivo'}"?`)) {
       deleteBlockedDate(block.id);
     }
@@ -94,27 +103,44 @@ const Index = () => {
     setCurrentWeek(startOfWeek(new Date(), { weekStartsOn: 1 }));
   }, []);
 
+  // Mostrar pantalla de carga
+  if (isLoading) {
+    return <LoadingScreen message="Cargando reservas..." />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border/50 bg-card">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary/10">
-              <Mountain className="h-5 w-5 text-primary" />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 rounded-xl bg-primary/10">
+              <img src="/la-nanana-icon.png" alt="La Nañana" className="h-8 w-8 sm:h-14 sm:w-14" />
             </div>
             <div>
-              <h1 className="text-lg font-display font-semibold text-foreground">
+              <h1 className="text-base sm:text-lg font-display font-semibold text-foreground">
                 Sierra de la Ventana
               </h1>
               <p className="text-xs text-muted-foreground">Gestión de reservas</p>
             </div>
           </div>
+          <Button variant="outline" size="icon" onClick={toggle}>
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
         </div>
       </header>
 
       {/* Main content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Error al cargar las reservas: {error}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <StatsCards reservations={reservations} currentMonth={currentWeek} />
 
         <Tabs defaultValue="timeline" className="space-y-4">
@@ -138,23 +164,27 @@ const Index = () => {
             </div>
 
             {/* Timelines per property */}
-            <WeeklyTimeline
-              property="onoke"
-              weekStart={currentWeek}
-              reservations={reservations}
-              blockedDates={blockedDates}
-              onReservationClick={handleReservationClick}
-              onBlockClick={handleBlockClick}
-            />
+            <div className="w-full">
+              <WeeklyTimeline
+                property="onoke"
+                weekStart={currentWeek}
+                reservations={reservations}
+                blockedDates={blockedDates}
+                onReservationClick={handleReservationClick}
+                onBlockClick={handleBlockClick}
+              />
+            </div>
 
-            <WeeklyTimeline
-              property="asike"
-              weekStart={currentWeek}
-              reservations={reservations}
-              blockedDates={blockedDates}
-              onReservationClick={handleReservationClick}
-              onBlockClick={handleBlockClick}
-            />
+            <div className="w-full">
+              <WeeklyTimeline
+                property="asike"
+                weekStart={currentWeek}
+                reservations={reservations}
+                blockedDates={blockedDates}
+                onReservationClick={handleReservationClick}
+                onBlockClick={handleBlockClick}
+              />
+            </div>
 
             {/* Action buttons */}
             <div className="flex justify-center gap-3">
