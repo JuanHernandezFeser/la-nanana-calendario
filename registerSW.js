@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/la-nanana-calendario/sw.js', { scope: '/la-nanana-calendario/' })})}
