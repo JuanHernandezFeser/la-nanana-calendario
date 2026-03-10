@@ -20,20 +20,20 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'La Nañana - Calendario',
-        short_name: 'La Nañana',
+        name: 'La Nanana - Calendario',
+        short_name: 'La Nanana',
         start_url: '/la-nanana-calendario/',
         display: 'standalone',
         background_color: '#ffffff',
         theme_color: '#10B981',
         icons: [
           {
-            src: '/la-nanana-icon.png',
+            src: '/la-nanana-calendario/la-nanana-icon.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/la-nanana-icon.png',
+            src: '/la-nanana-calendario/la-nanana-icon.png',
             sizes: '512x512',
             type: 'image/png'
           }
