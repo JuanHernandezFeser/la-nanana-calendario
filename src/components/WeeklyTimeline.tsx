@@ -57,14 +57,14 @@ export function WeeklyTimeline({
     return () => observer.disconnect();
   }, []);
 
-  const weekEnd = addDays(weekStart, 6);
+  const weekEnd = addDays(weekStart, 7);
 
   const propertyReservations = useMemo(() => {
     return reservations.filter((r) => {
       if (r.property !== property || r.status === 'cancelled') return false;
       const checkIn = parseISO(r.checkIn);
       const checkOut = parseISO(r.checkOut);
-      return isBefore(checkIn, weekEnd) && isAfter(checkOut, weekStart);
+      return isBefore(checkIn, weekEnd) && checkOut >= weekStart;
     });
   }, [reservations, property, weekStart, weekEnd]);
 
@@ -73,7 +73,7 @@ export function WeeklyTimeline({
       if (b.property !== property) return false;
       const start = parseISO(b.startDate);
       const end = parseISO(b.endDate);
-      return isBefore(start, weekEnd) && isAfter(end, weekStart);
+      return isBefore(start, weekEnd) && end >= weekStart;
     });
   }, [blockedDates, property, weekStart, weekEnd]);
 
@@ -209,7 +209,7 @@ export function WeeklyTimeline({
                         >
                           {r.guestName} -
                           <span className="flex items-center gap-0.5 opacity-80">
-                            <User className="h-3 w-3" /> {r.guests} - 
+                            <User className="h-3 w-3" /> {r.guests} -
                             $ {formatCurrency(r.total - r.deposit)}
                           </span>
                         </button>

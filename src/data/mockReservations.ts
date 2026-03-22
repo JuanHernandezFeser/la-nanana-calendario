@@ -13,7 +13,7 @@ export const mockReservations: Reservation[] = [
     guests: 2,
     total: 200,
     deposit: 50,
-    color: '#F472B6',
+    color: '#ff3d87',
     createdAt: '2026-02-10T10:00:00Z',
   },
   {
@@ -43,7 +43,7 @@ export const mockReservations: Reservation[] = [
     guests: 2,
     total: 300,
     deposit: 50,
-    color: '#60A5FA',
+    color: '#68a0e9',
     createdAt: '2026-02-15T09:00:00Z',
   },
   {

@@ -66,7 +66,7 @@ async function generateVoucherImage(reservation: any): Promise<string | null> {
   addLine('Saldo restante:', `$ ${formatCurrency(reservation.total - reservation.deposit)}`);
 
   // Try to load side image from public folder
-  const imgSrc = '/voucher-photo.jpg';
+  const imgSrc = '/la-nanana-calendario/voucher-photo.jpg';
   const loadImage = (src: string) =>
     new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();

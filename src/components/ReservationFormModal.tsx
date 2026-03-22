@@ -67,11 +67,11 @@ export function ReservationFormModal({
 
   const GREEN = '#10B981';
   const ONOKE_COLORS = [
-    { label: 'Rosa', value: '#F472B6' },
+    { label: 'Rosa', value: '#ff3d87' },
     { label: 'Verde', value: GREEN },
   ];
   const ASIKE_COLORS = [
-    { label: 'Celeste', value: '#60A5FA' },
+    { label: 'Celeste', value: '#68a0e9' },
     { label: 'Verde', value: GREEN },
   ];
 
